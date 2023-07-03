@@ -122,25 +122,14 @@ public class MicStreamPlugin implements FlutterPlugin, EventChannel.StreamHandle
                 byte[] data = new byte[BUFFER_SIZE];
                 recorder.read(data, 0, BUFFER_SIZE);
 
-                int foundPeak=searchThreshold(data,threshold);
-
-                if (foundPeak == -1) {
-                    if (silenceDegree <= SILENCE_DEGREE) {
-                        silenceDegree++;
-                    }
-
-                } else {
-                    silenceDegree = 0;
-                }
-
-                try {
-                    if (silenceDegree < SILENCE_DEGREE) {
-                        //SEND USEFUL DATA
+                int foundPeak = searchThreshold(data,threshold);
+                if (foundPeak>-1) {
+                    try {
                         eventSink.success(data);
+                    } catch (IllegalArgumentException e) {
+                        System.out.println("mic_stream: " + Arrays.hashCode(data) + " is not valid!");
+                        eventSink.error("-1", "Invalid Data", e);
                     }
-                } catch (IllegalArgumentException e) {
-                    System.out.println("mic_stream: " + Arrays.hashCode(data) + " is not valid!");
-                    eventSink.error("-1", "Invalid Data", e);
                 }
             }
             isRecording = false;
