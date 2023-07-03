@@ -58,7 +58,7 @@ public class MicStreamPlugin implements FlutterPlugin, EventChannel.StreamHandle
 
     // Audio recorder + initial values
     private static volatile AudioRecord recorder = null;
-    short threshold=15000;
+    short threshold=5000;
     private int SILENCE_DEGREE = 15;
 
     private int AUDIO_SOURCE = MediaRecorder.AudioSource.DEFAULT;
