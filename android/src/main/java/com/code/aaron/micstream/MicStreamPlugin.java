@@ -1,6 +1,8 @@
 package com.code.aaron.micstream;
 
 import java.lang.Math;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -114,22 +116,50 @@ public class MicStreamPlugin implements FlutterPlugin, EventChannel.StreamHandle
 
             // Wait until recorder is initialised
             while (recorder == null || recorder.getRecordingState() != AudioRecord.RECORDSTATE_RECORDING);
-            int silenceDegree = 0;
+            byte[] data = new byte[BUFFER_SIZE];
+            short[] voice = new short[data.length / 2];
+            int pauseTimed = 0;
             // Repeatedly push audio samples to stream
             while (record) {
+//                recorder.read(voice, 0, BUFFER_SIZE);
 
-                // Read audio data into new byte array
-                byte[] data = new byte[BUFFER_SIZE];
-                recorder.read(data, 0, BUFFER_SIZE);
+                try {
+                    recorder.read(data, 0, BUFFER_SIZE);
+                    ByteBuffer.wrap(data).order(ByteOrder.LITTLE_ENDIAN).asShortBuffer().get(voice);
+                    // int foundPeak = searchThreshold(voice,threshold);
 
-                int foundPeak = searchThreshold(data,threshold);
-                if (foundPeak>-1) {
-                    try {
-                        eventSink.success(data);
-                    } catch (IllegalArgumentException e) {
-                        System.out.println("mic_stream: " + Arrays.hashCode(data) + " is not valid!");
-                        eventSink.error("-1", "Invalid Data", e);
+                    double rms = 0;
+                    for (int i = 0; i < voice.length; i++) {
+                        double normal = voice[i] / 32768f;
+                        rms += normal * normal;
                     }
+                    rms = Math.sqrt(rms / voice.length);
+                    System.out.println("Listening, rms is " + rms);
+                    if (rms <= 0.1) {
+                        if (pauseTimed >= 40) {
+                        } else {
+                            pauseTimed++;
+                            eventSink.success(data);
+                        }
+                        // pause = true;
+                    } else {
+                        pauseTimed = 0;
+                        eventSink.success(data);
+                    }
+                    // if (foundPeak == -1) {
+                    //     if (silenceDegree <= SILENCE_DEGREE) {
+                    //         silenceDegree++;
+                    //     }
+                    // } else {
+                    //     silenceDegree = 0;
+                    // }
+                    // if (silenceDegree < SILENCE_DEGREE) {
+                    //     eventSink.success(data);
+                    // }
+
+                } catch (Exception e) {
+                    System.out.println("mic_stream: " + Arrays.hashCode(data) + " is not valid!");
+                    eventSink.error("-1", "Invalid Data", e);
                 }
             }
             isRecording = false;
