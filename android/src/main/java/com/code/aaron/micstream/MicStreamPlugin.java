@@ -58,6 +58,8 @@ public class MicStreamPlugin implements FlutterPlugin, EventChannel.StreamHandle
 
     // Audio recorder + initial values
     private static volatile AudioRecord recorder = null;
+    short threshold=15000;
+    private int SILENCE_DEGREE = 15;
 
     private int AUDIO_SOURCE = MediaRecorder.AudioSource.DEFAULT;
     private int SAMPLE_RATE = 16000;
@@ -112,7 +114,7 @@ public class MicStreamPlugin implements FlutterPlugin, EventChannel.StreamHandle
 
             // Wait until recorder is initialised
             while (recorder == null || recorder.getRecordingState() != AudioRecord.RECORDSTATE_RECORDING);
-
+            int silenceDegree = 0;
             // Repeatedly push audio samples to stream
             while (record) {
 
@@ -120,9 +122,22 @@ public class MicStreamPlugin implements FlutterPlugin, EventChannel.StreamHandle
                 byte[] data = new byte[BUFFER_SIZE];
                 recorder.read(data, 0, BUFFER_SIZE);
 
-                // push data into stream
+                int foundPeak=searchThreshold(data,threshold);
+
+                if (foundPeak == -1) {
+                    if (silenceDegree <= SILENCE_DEGREE) {
+                        silenceDegree++;
+                    }
+
+                } else {
+                    silenceDegree = 0;
+                }
+
                 try {
-                    eventSink.success(data);
+                    if (silenceDegree < SILENCE_DEGREE) {
+                        //SEND USEFUL DATA
+                        eventSink.success(data);
+                    }
                 } catch (IllegalArgumentException e) {
                     System.out.println("mic_stream: " + Arrays.hashCode(data) + " is not valid!");
                     eventSink.error("-1", "Invalid Data", e);
@@ -131,6 +146,19 @@ public class MicStreamPlugin implements FlutterPlugin, EventChannel.StreamHandle
             isRecording = false;
         }
     };
+
+    int searchThreshold(byte[]arr,short thr){
+        int peakIndex;
+        int arrLen=arr.length;
+        for (peakIndex=0;peakIndex<arrLen;peakIndex++){
+            if ((arr[peakIndex]>=thr) || (arr[peakIndex]<=-thr)){
+
+                return peakIndex;
+            }
+        }
+        return -1; //not found
+    }
+
 
     /// Bug fix by https://github.com/Lokhozt
     /// following https://github.com/flutter/flutter/issues/34993
