@@ -139,6 +139,7 @@ public class MicStreamPlugin implements FlutterPlugin, EventChannel.StreamHandle
                         rms += normal * normal;
                     }
                     rms = Math.sqrt(rms / voice.length);
+
                     System.out.println("Listening, rms is " + rms);
                     if (rms <= AUDIO_LEVEL) {
                         if (pauseTimed >= PAUSE_INTERVAL) {
@@ -209,24 +210,24 @@ public class MicStreamPlugin implements FlutterPlugin, EventChannel.StreamHandle
     public void onListen(Object args, final EventChannel.EventSink eventSink) {
         if (isRecording) return;
 
-        ArrayList<Integer> config = (ArrayList<Integer>) args;
+        ArrayList config = (ArrayList) args;
 
         // Set parameters, if available
         switch(config.size()) {
             case 6:
-                AUDIO_LEVEL = config.get(5);
-                System.out.println("AUDIO LEVEL: " + AUDIO_LEVEL);
+                Double test = (double)config.get(5);
+                System.out.println("AUDIO LEVEL: " + test);
             case 5:
-                PAUSE_INTERVAL = config.get(4);
+                PAUSE_INTERVAL = (int)config.get(4);
                 System.out.println("PAUSE INTERVAL: " + PAUSE_INTERVAL);
             case 4:
-                AUDIO_FORMAT = config.get(3);
+                AUDIO_FORMAT = (int)config.get(3);
             case 3:
-                CHANNEL_CONFIG = config.get(2);
+                CHANNEL_CONFIG = (int)config.get(2);
             case 2:
-                SAMPLE_RATE = config.get(1);
+                SAMPLE_RATE = (int)config.get(1);
             case 1:
-                AUDIO_SOURCE = config.get(0);
+                AUDIO_SOURCE = (int)config.get(0);
             default:
                 try {
                     BUFFER_SIZE = AudioRecord.getMinBufferSize(SAMPLE_RATE, CHANNEL_CONFIG, AUDIO_FORMAT);

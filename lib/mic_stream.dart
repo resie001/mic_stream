@@ -136,7 +136,7 @@ class MicStream {
         channelConfig == ChannelConfig.CHANNEL_IN_MONO ? 16 : 12,
         audioFormat == AudioFormat.ENCODING_PCM_8BIT ? 3 : 2,
         pauseInterval,
-        audioFormat,
+        audioLevel,
       ]).cast<Uint8List>();
       __audioSource = audioSource;
       __sampleRate = sampleRate;
