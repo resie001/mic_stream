@@ -39,6 +39,8 @@ class MicStream {
       ChannelConfig.CHANNEL_IN_MONO;
   static const AudioFormat DEFAULT_AUDIO_FORMAT = AudioFormat.ENCODING_PCM_8BIT;
   static const int DEFAULT_SAMPLE_RATE = 16000;
+  static const int DEFAULT_PAUSE_INTERVAL = 40;
+  static const double DEFAULT_AUDIO_LEVEL = 0.1;
 
   static const int _MIN_SAMPLE_RATE = 1;
   static const int _MAX_SAMPLE_RATE = 100000;
@@ -90,15 +92,20 @@ class MicStream {
   /// channelConfig:   States whether audio is mono or stereo
   /// audioFormat:     Switch between 8- and 16-bit PCM streams
   ///
-  static Future<Stream<Uint8List>?> microphone(
-      {AudioSource? audioSource,
-      int? sampleRate,
-      ChannelConfig? channelConfig,
-      AudioFormat? audioFormat}) async {
+  static Future<Stream<Uint8List>?> microphone({
+    AudioSource? audioSource,
+    int? sampleRate,
+    ChannelConfig? channelConfig,
+    AudioFormat? audioFormat,
+    int? pauseInterval,
+    double? audioLevel,
+  }) async {
     audioSource ??= DEFAULT_AUDIO_SOURCE;
     sampleRate ??= DEFAULT_SAMPLE_RATE;
     channelConfig ??= DEFAULT_CHANNELS_CONFIG;
     audioFormat ??= DEFAULT_AUDIO_FORMAT;
+    pauseInterval ??= DEFAULT_PAUSE_INTERVAL;
+    audioLevel ??= DEFAULT_AUDIO_LEVEL;
 
     if (sampleRate < _MIN_SAMPLE_RATE || sampleRate > _MAX_SAMPLE_RATE)
       throw (RangeError.range(sampleRate, _MIN_SAMPLE_RATE, _MAX_SAMPLE_RATE));
@@ -115,7 +122,9 @@ class MicStream {
         audioSource.index,
         sampleRate,
         channelConfig == ChannelConfig.CHANNEL_IN_MONO ? 16 : 12,
-        audioFormat == AudioFormat.ENCODING_PCM_8BIT ? 3 : 2
+        audioFormat == AudioFormat.ENCODING_PCM_8BIT ? 3 : 2,
+        pauseInterval,
+        audioFormat,
       ]).cast<Uint8List>();
       __audioSource = audioSource;
       __sampleRate = sampleRate;

@@ -60,14 +60,14 @@ public class MicStreamPlugin implements FlutterPlugin, EventChannel.StreamHandle
 
     // Audio recorder + initial values
     private static volatile AudioRecord recorder = null;
-    short threshold=5000;
-    private int SILENCE_DEGREE = 15;
 
     private int AUDIO_SOURCE = MediaRecorder.AudioSource.DEFAULT;
     private int SAMPLE_RATE = 16000;
     private int actualSampleRate;
     private int CHANNEL_CONFIG = AudioFormat.CHANNEL_IN_MONO;
     private int AUDIO_FORMAT = AudioFormat.ENCODING_PCM_8BIT;
+    private double AUDIO_LEVEL = 0.1;
+    private int PAUSE_INTERVAL = 40;
     private int actualBitDepth;
     private int BUFFER_SIZE = AudioRecord.getMinBufferSize(SAMPLE_RATE, CHANNEL_CONFIG, AUDIO_FORMAT);
 
@@ -121,7 +121,6 @@ public class MicStreamPlugin implements FlutterPlugin, EventChannel.StreamHandle
             int pauseTimed = 0;
             // Repeatedly push audio samples to stream
             while (record) {
-//                recorder.read(voice, 0, BUFFER_SIZE);
 
                 try {
                     recorder.read(data, 0, BUFFER_SIZE);
@@ -135,8 +134,9 @@ public class MicStreamPlugin implements FlutterPlugin, EventChannel.StreamHandle
                     }
                     rms = Math.sqrt(rms / voice.length);
                     System.out.println("Listening, rms is " + rms);
-                    if (rms <= 0.1) {
-                        if (pauseTimed >= 40) {
+                    if (rms <= AUDIO_LEVEL) {
+                        if (pauseTimed >= PAUSE_INTERVAL) {
+                            eventSink.success(new byte[0]);
                         } else {
                             pauseTimed++;
                             eventSink.success(data);
@@ -146,16 +146,6 @@ public class MicStreamPlugin implements FlutterPlugin, EventChannel.StreamHandle
                         pauseTimed = 0;
                         eventSink.success(data);
                     }
-                    // if (foundPeak == -1) {
-                    //     if (silenceDegree <= SILENCE_DEGREE) {
-                    //         silenceDegree++;
-                    //     }
-                    // } else {
-                    //     silenceDegree = 0;
-                    // }
-                    // if (silenceDegree < SILENCE_DEGREE) {
-                    //     eventSink.success(data);
-                    // }
 
                 } catch (Exception e) {
                     System.out.println("mic_stream: " + Arrays.hashCode(data) + " is not valid!");
@@ -165,19 +155,6 @@ public class MicStreamPlugin implements FlutterPlugin, EventChannel.StreamHandle
             isRecording = false;
         }
     };
-
-    int searchThreshold(byte[]arr,short thr){
-        int peakIndex;
-        int arrLen=arr.length;
-        for (peakIndex=0;peakIndex<arrLen;peakIndex++){
-            if ((arr[peakIndex]>=thr) || (arr[peakIndex]<=-thr)){
-
-                return peakIndex;
-            }
-        }
-        return -1; //not found
-    }
-
 
     /// Bug fix by https://github.com/Lokhozt
     /// following https://github.com/flutter/flutter/issues/34993
@@ -230,6 +207,12 @@ public class MicStreamPlugin implements FlutterPlugin, EventChannel.StreamHandle
 
         // Set parameters, if available
         switch(config.size()) {
+            case 6:
+                AUDIO_LEVEL = config.get(5);
+                System.out.println("AUDIO LEVEL: " + AUDIO_LEVEL);
+            case 5:
+                PAUSE_INTERVAL = config.get(4);
+                System.out.println("PAUSE INTERVAL: " + PAUSE_INTERVAL);
             case 4:
                 AUDIO_FORMAT = config.get(3);
             case 3:
