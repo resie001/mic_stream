@@ -65,6 +65,14 @@ class MicStream {
 
   static Future<int>? _bufferSize;
 
+  static Future<double>? get audioLevel => _audioLevel;
+
+  static Future<double>? _audioLevel;
+
+  static Future<int>? get pauseInterval => _pauseInterval;
+
+  static Future<int>? _pauseInterval;
+
   /// The configured microphone stream and its config
   static Stream<Uint8List>? _microphone;
   static AudioSource? __audioSource;
@@ -145,9 +153,13 @@ class MicStream {
     var sampleRateCompleter = new Completer<double>();
     var bitDepthCompleter = new Completer<int>();
     var bufferSizeCompleter = new Completer<int>();
+    var audioLevelCompleter = new Completer<double>();
+    var pauseIntervalCompleter = new Completer<int>();
     _sampleRate = sampleRateCompleter.future;
     _bitDepth = bitDepthCompleter.future;
     _bufferSize = bufferSizeCompleter.future;
+    _pauseInterval = pauseIntervalCompleter.future;
+    _audioLevel = audioLevelCompleter.future;
 
     listener = _microphone!.listen((x) async {
       await listener!.cancel();
@@ -158,6 +170,10 @@ class MicStream {
           await _microphoneMethodChannel.invokeMethod("getBitDepth") as int?);
       bufferSizeCompleter.complete(
           await _microphoneMethodChannel.invokeMethod("getBufferSize") as int?);
+      pauseIntervalCompleter.complete(await _microphoneMethodChannel
+          .invokeMethod("getPauseInterval") as int?);
+      audioLevelCompleter.complete(await _microphoneMethodChannel
+          .invokeMethod("getAudioLevel") as double?);
     });
 
     return _microphone;
