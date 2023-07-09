@@ -71,6 +71,8 @@ class MicStream {
   static int? __sampleRate;
   static ChannelConfig? __channelConfig;
   static AudioFormat? __audioFormat;
+  static int? __pauseInterval;
+  static double? __audioLevel;
 
   /// This function manages the permission and ensures you're allowed to record audio
   static Future<bool> get permissionStatus async {
@@ -116,7 +118,9 @@ class MicStream {
     if (audioSource != __audioSource ||
         sampleRate != __sampleRate ||
         channelConfig != __channelConfig ||
-        audioFormat != __audioFormat) {
+        audioFormat != __audioFormat ||
+        audioLevel != __audioLevel ||
+        pauseInterval != __pauseInterval) {
       //TODO: figure out whether the old stream needs to be cancelled
       _microphone = _microphoneEventChannel.receiveBroadcastStream([
         audioSource.index,
@@ -130,6 +134,8 @@ class MicStream {
       __sampleRate = sampleRate;
       __channelConfig = channelConfig;
       __audioFormat = audioFormat;
+      __pauseInterval = pauseInterval;
+      __audioLevel = audioLevel;
     }
 
     // sampleRate/bitDepth should be populated before any attempt to consume the stream externally.

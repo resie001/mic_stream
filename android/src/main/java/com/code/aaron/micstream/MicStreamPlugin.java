@@ -88,6 +88,12 @@ public class MicStreamPlugin implements FlutterPlugin, EventChannel.StreamHandle
             case "getBufferSize":
                 result.success(this.BUFFER_SIZE);
                 break;
+            case "getPauseInterval":
+                result.success(this.PAUSE_INTERVAL);
+                break;
+            case "getAudioLevel":
+                result.success(this.AUDIO_LEVEL);
+                break;
             default:
                 result.notImplemented();
                 break;
